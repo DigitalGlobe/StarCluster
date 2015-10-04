@@ -1429,6 +1429,17 @@ class Cluster(object):
         self.pool.map(lambda n: n.wait(interval=self.refresh_interval), nodes,
                       jobid_fn=lambda n: n.alias)
 
+    def countdown_timer(self, period):
+        pbar = self.progress_bar.reset()
+        pbar.maxval = period
+        pbar.update(0)
+        idx = 0
+        while (idx <= period):
+            time.sleep(1)
+            pbar.update(idx)
+            idx += 1
+        return
+
     @print_timing("Waiting for cluster to come up")
     def wait_for_cluster(self, msg="Waiting for cluster to come up..."):
         """
@@ -1444,6 +1455,8 @@ class Cluster(object):
             self.wait_for_active_spots()
             self.wait_for_running_instances()
             self.wait_for_ssh()
+            log.info("Sleeping to allow cloud init to finish...")
+            self.countdown_timer(150) 
         except Exception:
             self.progress_bar.finish()
             raise
